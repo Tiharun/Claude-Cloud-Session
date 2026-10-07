@@ -35,6 +35,7 @@
 13. [업데이트하기](#13-업데이트하기)
 14. [삭제하기](#14-삭제하기)
 15. [문제 해결](#15-문제-해결)
+   - [15.1 플러그인 마켓 등록이 시간 초과로 실패할 때](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out)
 16. [토큰 비용](#16-토큰-비용)
 17. [자주 묻는 질문](#17-자주-묻는-질문)
 18. [출처](#18-출처)
@@ -50,6 +51,7 @@
 | Claude Code 등록·확인·삭제 | `claude mcp add` → `list`(Connected 확인) → `get` → `remove` 실행 | ✅ |
 | Claude Code 플러그인 방식 | GitHub에서 바로 설치하는 것은 **이 작업 환경의 네트워크 정책 때문에 실패**(하위 모듈을 `chromium.googlesource.com`에서 받아야 하는데 차단됨). 로컬 사본으로 설치, `details`, 삭제는 성공 | ⚠️ 부분 확인 |
 | CLI (`chrome-devtools`) | `start` → `status` → `new_page` → `take_screenshot` → `list_pages` → `stop` 실행 | ✅ |
+| 플러그인 로컬 마켓 설치 (15.1절) | 하위 저장소 없이 `git clone --depth 1` → 로컬 폴더를 마켓으로 등록 → 설치 → 갱신 명령 → 폴더를 옮겼을 때 동작 확인 | ✅ |
 | 데스크톱 앱 Code 탭 | Claude Code 공식 문서(Desktop application)로 확인. **앱을 직접 실행해 보지는 않음** | ⚠️ 문서 기준 |
 | 외부 사이트 접속 | 작업 환경이 외부 웹사이트를 막아서 **내가 만든 로컬 테스트 페이지로만** 시험 | ⚠️ 여러분 PC에서는 일반 사이트 가능 |
 
@@ -268,7 +270,7 @@ claude plugin install chrome-devtools-mcp@chrome-devtools-plugins
 
 로컬 사본으로 설치해서 확인한 구성: **스킬 7개, MCP 서버 1개, 훅 0개, 에이전트 0개**
 
-> ⚠️ **`Failed to clone repository` 오류가 나면:** 회사 방화벽 등으로 GitHub나 Chromium 저장소 접속이 막힌 경우입니다. 저도 작업 환경에서 같은 이유로 실패했습니다. 이때는 **방법 A**를 쓰세요 (스킬은 빠지지만 도구는 똑같이 쓸 수 있습니다).
+> ⚠️ **마켓 등록이 실패하면 (`Failed to clone repository`, `Git clone timed out after 120s`, `EBUSY`):** 이 저장소는 수 GB급 하위 저장소(submodule)를 달고 있어서, 네트워크가 막혀 있거나 느리면 등록이 실패합니다. 저도 작업 환경에서 같은 이유로 실패했고, Windows 사용자 PC에서도 시간 초과가 확인됐습니다. **[15.1절](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out)** 의 정리 방법과 해결책(MCP로만 설치, 또는 직접 받아서 로컬 마켓으로 등록)을 따르세요.
 >
 > 💡 플러그인 방식은 서버 버전이 고정됩니다 (현재 `chrome-devtools-mcp@1.10.1`). 방법 A의 `@latest`는 실행할 때마다 최신 버전을 씁니다.
 
@@ -723,6 +725,7 @@ claude mcp add chrome-devtools --scope user -- npx -y chrome-devtools-mcp@latest
 |---|---|
 | 방법 A (`npx ...@latest`) | **자동.** 실행할 때마다 최신 버전을 확인합니다. 그래도 옛 버전이 실행되면 15장의 npx 캐시 정리를 참고하세요 |
 | 방법 B (플러그인) | `claude plugin marketplace update chrome-devtools-plugins` 후 `claude plugin update chrome-devtools-mcp@chrome-devtools-plugins`, 그리고 Claude Code 재시작 |
+| 방법 B를 로컬 마켓으로 설치한 경우 ([15.1절](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out) 해결 2) | 먼저 `git -C <클론 폴더> pull`, 그다음 위 방법 B 명령 |
 | CLI 전역 설치 | `npm i chrome-devtools-mcp@latest -g` |
 | Gemini 확장 | `--auto-update`로 설치했다면 자동 |
 
@@ -754,6 +757,8 @@ claude plugin uninstall chrome-devtools-mcp@chrome-devtools-plugins
 claude plugin marketplace remove chrome-devtools-plugins
 ```
 Claude Code 안에서는 `/plugin` 관리 화면에서도 할 수 있습니다.
+
+[15.1절](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out)의 해결 2(로컬 마켓)로 설치했다면 클론한 폴더(예: `%USERPROFILE%\tools\chrome-devtools-mcp`)도 함께 지우세요.
 
 ### 14.3 잠시 끄기만 하려면
 
@@ -788,7 +793,8 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\chrome-devtools-mcp"
 | Chrome이 안 뜸 / `Target closed` | Chrome 미설치, 경로 문제, 같은 프로필을 다른 Chrome이 사용 중 | Chrome 설치 확인, `--executablePath` 지정, `--isolated` 사용 |
 | Linux 컨테이너에서 Chrome이 바로 꺼짐 | **root 계정에서는 Chrome이 실행되지 않음** (실험에서 같은 오류 확인) | 일반 사용자 계정으로 실행 |
 | WSL에서 안 됨 | WSL의 알려진 문제 | WSL 안에 Chrome 설치, 또는 PowerShell이나 Git Bash 사용 |
-| 플러그인 설치 시 `Failed to clone repository` | GitHub이나 Chromium 저장소 접속 차단 (방화벽, 프록시) | 방법 A(`claude mcp add`)로 설치 |
+| 플러그인 설치 시 `Failed to clone repository` | GitHub이나 Chromium 저장소 접속 차단 (방화벽, 프록시) | 방법 A(`claude mcp add`)로 설치, 또는 [15.1절](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out)의 해결 2 |
+| 플러그인 마켓 등록 시 `Git clone timed out after 120s` / `EBUSY` | 수 GB급 하위 저장소까지 받다가 시간 초과, 남은 임시 폴더가 잠김 | [15.1절](#151-플러그인-마켓-등록이-시간-초과로-실패할-때-git-clone-timed-out) |
 | `--autoConnect`에서 시간 초과 | Chrome 미실행, 원격 디버깅 꺼짐, 허용 창을 안 누름, 다른 도구가 포트 사용 중 | Chrome 144 이상을 켜 두고 `chrome://inspect/#remote-debugging`에서 켠 뒤 Allow 클릭. 탭이 수백 개면 느릴 수 있음 |
 | macOS: Web Bluetooth 사용 시 Chrome 충돌 | 알려진 문제 | 공식 troubleshooting 문서 참고 |
 | 저장한 파일이 안 보임 | 파일 쓰기가 임시 폴더로 제한됨 | `--filesystem-root=<폴더>` 추가 |
@@ -796,6 +802,81 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\chrome-devtools-mcp"
 | 원인을 모르겠음 | — | `npx chrome-devtools-mcp@latest --help`가 실행되는지 먼저 확인. 로그: `NODE_DEBUG=*`와 `--log-file=<경로>` |
 
 플러그인 방식이면 `troubleshooting` 스킬이 있으니 "chrome devtools 연결이 안 돼, 원인 찾아줘"라고 요청해도 됩니다.
+
+### 15.1 플러그인 마켓 등록이 시간 초과로 실패할 때 (`Git clone timed out`)
+
+`claude plugin marketplace add ChromeDevTools/chrome-devtools-mcp`를 실행하면 아래와 같은 오류가 날 수 있습니다 (실제 Windows 사용자 사례).
+```
+✘ Failed to add marketplace: Fetching the marketplace from GitHub failed on both attempts.
+SSH (...): Git clone timed out after 120s. ...
+Submodule 'devtools-frontend' (...) registered for path 'third_party/devtools-frontend'
+Submodule '.../llvm/src' (https://chromium.googlesource.com/external/github.com/llvm/llvm-project) ...
+HTTPS (...): Failed to clean up a leftover marketplace staging directory. ...
+Technical details: EBUSY: resource busy or locked, rmdir '...\ChromeDevTools-chrome-devtools-mcp..clone'
+```
+
+**원인**
+1. 이 저장소에는 Chrome DevTools 프런트엔드 전체가 **하위 저장소(submodule)** 로 딸려 있고, 그 안에 `llvm-project` 같은 **수 GB급 저장소**가 또 들어 있습니다. Claude Code가 마켓을 등록할 때 이것까지 전부 내려받으려다 **2분 제한에 걸립니다.**
+2. 첫 시도(SSH)가 남긴 임시 폴더가 잠겨 있어서(`EBUSY`), 두 번째 시도(HTTPS)는 시작도 못 하고 실패합니다.
+
+오류 메시지는 `CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS`로 시간 제한을 늘리라고 안내하지만 **권하지 않습니다.** 받을 양이 너무 커서 오래 걸리고, 디스크를 많이 쓰고, Windows 경로 길이 제한에 걸릴 수도 있습니다. 플러그인에 실제로 필요한 파일은 하위 저장소가 아니라 본 저장소에만 있습니다 (하위 저장소 없이 받은 사본으로 설치 성공을 확인했습니다).
+
+#### 1단계. 남은 임시 폴더 정리 (필수)
+
+1. Claude Code와 다른 PowerShell 창을 모두 닫고 **새 PowerShell**을 엽니다.
+2. 아직 실행 중일 수 있는 git 프로세스를 끕니다. 다른 프로그램(VS Code 등)의 git 작업도 함께 꺼지니, 진행 중인 작업이 없을 때 실행하세요.
+   ```powershell
+   Get-Process git -ErrorAction SilentlyContinue | Stop-Process -Force
+   ```
+3. 남은 폴더를 지웁니다. 하위 저장소 경로가 매우 깊어서 일반 삭제는 실패할 수 있으므로, Windows 경로 길이 제한(260자)을 피하는 `\\?\` 형식을 씁니다.
+   ```powershell
+   cmd /c rd /s /q "\\?\$env:USERPROFILE\.claude\plugins\marketplaces\ChromeDevTools-chrome-devtools-mcp..clone"
+   ```
+   그래도 "사용 중" 오류가 나면 **PC를 재시작한 뒤** 다시 실행하세요. 백신 검사가 파일을 붙잡고 있는 경우도 있습니다.
+4. 마켓이 반쯤 등록됐는지 확인하고, 보이면 지웁니다.
+   ```powershell
+   claude plugin marketplace list
+   claude plugin marketplace remove chrome-devtools-plugins   # 목록에 있을 때만
+   ```
+
+#### 2단계. 다시 설치 (둘 중 하나)
+
+**해결 1 (가장 간단, 추천): MCP로만 설치**
+
+저장소를 내려받지 않고 npm에서 실행 파일만 받으므로 이 문제가 생기지 않습니다. 공식 문제 해결 문서가 권하는 방법이기도 합니다. **스킬 7개만 빠지고** 도구 30개는 똑같이 쓸 수 있습니다.
+```powershell
+claude mcp add chrome-devtools --scope user -- npx -y chrome-devtools-mcp@latest
+claude mcp list     # → chrome-devtools: ... √ Connected
+```
+
+**해결 2 (스킬까지 원할 때): 하위 저장소 없이 직접 받아서 "로컬 마켓"으로 등록** (실제 실행 확인)
+
+```powershell
+git clone --depth 1 https://github.com/ChromeDevTools/chrome-devtools-mcp.git "$env:USERPROFILE\tools\chrome-devtools-mcp"
+claude plugin marketplace add "$env:USERPROFILE\tools\chrome-devtools-mcp"
+claude plugin install chrome-devtools-mcp@chrome-devtools-plugins
+```
+- `git clone`은 기본으로 하위 저장소를 받지 않습니다. 실험에서는 **약 18MB, 1초 만에** 받아졌습니다. `--depth 1`은 최신 버전만 받는 옵션입니다.
+- 등록 후 `claude plugin marketplace list`를 보면 원본이 `Source: Folder (<클론한 경로>)`로 표시됩니다.
+- Claude Code를 재시작하고 `/skills`에서 스킬 7개가 보이는지 확인하세요.
+- 해결 1로 설치한 것이 남아 있다면 중복되지 않게 지우세요: `claude mcp remove chrome-devtools --scope user`
+
+> 🚨 **클론한 폴더를 지우거나 옮기지 마세요.** 마켓이 그 폴더를 원본으로 계속 참조합니다. 실험에서 폴더를 옮기자 `claude plugin list`에 `Status: × failed to load` / `Marketplace chrome-devtools-plugins failed to load: cache-miss`가 표시됐습니다. 다시 원래 자리로 돌려놓으면 됩니다.
+
+**해결 2의 업데이트** (자동으로 되지 않음):
+```powershell
+git -C "$env:USERPROFILE\tools\chrome-devtools-mcp" pull
+claude plugin marketplace update chrome-devtools-plugins
+claude plugin update chrome-devtools-mcp@chrome-devtools-plugins
+```
+그다음 Claude Code를 재시작합니다. (위 세 명령이 오류 없이 실행되는 것은 확인했습니다. 실험 시점에는 새 버전이 없어서 실제 버전이 올라가는 것까지는 확인하지 못했습니다.)
+
+**해결 2의 삭제**: 14.2절 명령을 실행한 뒤, 클론한 폴더도 지웁니다.
+```powershell
+claude plugin uninstall chrome-devtools-mcp@chrome-devtools-plugins
+claude plugin marketplace remove chrome-devtools-plugins
+Remove-Item -Recurse -Force "$env:USERPROFILE\tools\chrome-devtools-mcp"
+```
 
 ---
 
