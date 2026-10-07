@@ -24,6 +24,7 @@
 3. [할 수 있는 일: 도구 목록](#3-할-수-있는-일-도구-목록)
 4. [설치 전 준비물](#4-설치-전-준비물)
 5. [설치하기](#5-설치하기)
+   - [5.5 Claude 데스크톱 앱 Code 탭에서 쓰기](#55-claude-데스크톱-앱-code-탭에서-쓰기)
 6. [설치 확인과 첫 사용](#6-설치-확인과-첫-사용)
 7. [사용법: 이렇게 말하면 됩니다](#7-사용법-이렇게-말하면-됩니다)
 8. [응용: 실전 시나리오](#8-응용-실전-시나리오)
@@ -49,6 +50,7 @@
 | Claude Code 등록·확인·삭제 | `claude mcp add` → `list`(Connected 확인) → `get` → `remove` 실행 | ✅ |
 | Claude Code 플러그인 방식 | GitHub에서 바로 설치하는 것은 **이 작업 환경의 네트워크 정책 때문에 실패**(하위 모듈을 `chromium.googlesource.com`에서 받아야 하는데 차단됨). 로컬 사본으로 설치, `details`, 삭제는 성공 | ⚠️ 부분 확인 |
 | CLI (`chrome-devtools`) | `start` → `status` → `new_page` → `take_screenshot` → `list_pages` → `stop` 실행 | ✅ |
+| 데스크톱 앱 Code 탭 | Claude Code 공식 문서(Desktop application)로 확인. **앱을 직접 실행해 보지는 않음** | ⚠️ 문서 기준 |
 | 외부 사이트 접속 | 작업 환경이 외부 웹사이트를 막아서 **내가 만든 로컬 테스트 페이지로만** 시험 | ⚠️ 여러분 PC에서는 일반 사이트 가능 |
 
 시험은 **Linux 클라우드 환경**에서 했습니다. **Windows 관련 내용은 공식 문서 기준**이며 Windows PC에서 직접 실행해 보지는 않았습니다.
@@ -200,6 +202,8 @@ Node.js가 없으면 <https://nodejs.org>에서 **LTS** 버전을 설치하세�
 | B. Claude Code 플러그인 | MCP 서버 + 사용법 스킬 7개 | AI가 도구를 더 능숙하게 쓰길 원할 때 |
 | C. 다른 AI 도구 | 도구별로 다름 | Cursor, VS Code, Gemini CLI 등 |
 
+> 🖥️ **Claude 데스크톱 앱의 Code 탭을 쓰시나요?** A나 B로 설치하면 Code 탭에서도 **그대로** 쓸 수 있습니다. 데스크톱 앱 화면만으로 설치하는 방법은 [5.5절](#55-claude-데스크톱-앱-code-탭에서-쓰기)을 보세요.
+
 > ⚠️ **A와 B를 동시에 하지 마세요.** 같은 서버가 두 번 등록됩니다. 공식 문서도 "플러그인을 설치하기 전에 기존 MCP 설치를 먼저 제거하라"고 안내합니다.
 
 ---
@@ -293,6 +297,124 @@ claude plugin install chrome-devtools-mcp@chrome-devtools-plugins
 | Codex | `codex mcp add chrome-devtools -- npx chrome-devtools-mcp@latest` (Windows 11은 `.codex/config.toml`에 `cmd /c`와 `startup_timeout_ms = 20_000` 설정) |
 | Antigravity | MCP 설정에 위 내용 + `--browser-url=http://127.0.0.1:9222` (Antigravity 내장 브라우저에 연결) |
 | Windsurf, Cline, JetBrains, Kiro, Warp, OpenCode, Amp 등 | 각 도구의 MCP 설정에 위 표준 설정 |
+
+---
+
+### 5.5 Claude 데스크톱 앱 Code 탭에서 쓰기
+
+> **이 절의 근거와 한계**
+> - 근거: Claude Code 공식 문서 [Desktop application](https://code.claude.com/docs/en/desktop) (2026-10-07 확인)
+> - 한계: 데스크톱 앱을 **직접 실행해 보지는 않았습니다** (작업 환경에 화면이 없음). 메뉴 이름이 앱 버전에 따라 조금 다를 수 있습니다.
+
+#### 핵심: Code 탭과 터미널 Claude Code는 설정을 공유합니다
+
+공식 문서의 표현은 이렇습니다.
+> "Desktop runs the same underlying engine with a graphical interface."
+> "Desktop and CLI read the same configuration files, so your setup carries over."
+
+Code 탭은 **터미널 Claude Code와 같은 엔진을 화면으로 감싼 것**입니다. 그래서 아래 설정이 그대로 공유됩니다.
+
+| 공유되는 것 | 의미 |
+|---|---|
+| `~/.claude.json`, `.mcp.json`의 MCP 서버 | **방법 A(`claude mcp add`)로 등록한 서버가 Code 탭에서도 보임** |
+| 플러그인과 스킬 | **방법 B(플러그인)로 설치한 것도 Code 탭에서 쓸 수 있음** (scope는 user, project, local 모두 지원) |
+| `~/.claude/settings.json` | 권한 규칙 등 설정 공유 |
+| `CLAUDE.md` | 프로젝트 메모리 공유 |
+
+**즉, 이미 터미널에서 설치했다면 Code 탭에서 따로 할 일이 없습니다.** 앱을 재시작한 뒤 바로 쓰면 됩니다.
+
+> ⚠️ **로컬(Local) 세션에서만 됩니다.** Code 탭에서 세션을 시작할 때 실행 환경을 **Local**(내 컴퓨터)로 고르세요. 공식 문서 기준으로 **Cloud** 세션과 **WSL** 세션에서는 데스크톱 앱에서 설치한 플러그인을 쓸 수 없습니다. 이 서버는 내 PC의 Chrome을 띄우는 도구라서 Local이 맞습니다.
+
+#### 터미널 없이 데스크톱 앱 화면만으로 설치하기
+
+**① 플러그인으로 설치 (MCP 서버 + 스킬 7개)**
+
+1. Claude 데스크톱 앱 → **Code** 탭 → 실행 환경 **Local**로 새 세션을 시작합니다.
+2. 입력창 옆의 **+** 버튼 → **Plugins** → **Add plugin**을 누르면 플러그인 브라우저가 열립니다.
+3. 목록에서 `chrome-devtools-mcp`를 찾아 설치하고, 범위(나만 / 이 프로젝트 / 이 프로젝트에서 나만)를 고릅니다.
+4. 설치된 것은 **+ → Plugins → Manage plugins**에서 켜고 끄거나 삭제할 수 있습니다.
+
+> 💡 **목록에 안 보이면:** 플러그인 브라우저는 **등록된 마켓플레이스**의 플러그인만 보여 줍니다 (Anthropic 공식 마켓 포함). Chrome DevTools 마켓이 등록되어 있지 않으면, Code 탭의 **내장 터미널**(제목 표시줄의 **Terminal** 또는 `` Ctrl+` ``)을 열고 한 번만 등록하세요. 이후 2번부터 다시 하면 됩니다.
+> ```powershell
+> claude plugin marketplace add ChromeDevTools/chrome-devtools-mcp
+> ```
+> 이 명령에는 터미널용 Claude Code(`claude` 명령)가 설치되어 있어야 합니다. 데스크톱 앱 화면에서 마켓플레이스를 직접 추가하는 메뉴가 있는지는 공식 문서에서 확인하지 못했습니다.
+
+**② MCP 서버만 설치 (설정 파일)**
+
+공식 문서 기준으로 Code 탭은 아래 **세 곳**의 MCP 설정을 모두 읽습니다.
+
+| 설정 파일 | 위치 (Windows) | 만드는 방법 |
+|---|---|---|
+| `~/.claude.json` | `C:\Users\<이름>\.claude.json` | 방법 A의 `claude mcp add` (직접 편집은 비추천) |
+| `.mcp.json` | 프로젝트 폴더 | 직접 작성. 팀과 공유할 때 |
+| `claude_desktop_config.json` | 보통 `%APPDATA%\Claude\claude_desktop_config.json`. 데스크톱 앱 **설정 → 개발자(Developer) → 설정 편집(Edit Config)** 으로 열 수 있음 (이 경로와 메뉴는 일반적인 MCP 안내 기준이며, 이번에 확인한 Code 탭 문서에는 나오지 않음) | 직접 작성. 데스크톱 앱의 **일반 채팅(Chat 탭)에서도 함께** 쓰고 싶을 때 |
+
+`claude_desktop_config.json`에 넣는 내용은 표준 설정과 같습니다.
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest", "--isolated", "--no-usage-statistics"]
+    }
+  }
+}
+```
+저장한 뒤 데스크톱 앱을 **완전히 종료**(작업 표시줄 트레이 아이콘에서 종료)하고 다시 실행하세요.
+
+> ⚠️ **같은 이름을 여러 곳에 등록했을 때:** 공식 문서에 따르면 Code 탭은 같은 이름의 서버를 **한 번만 연결**합니다. `claude_desktop_config.json`과 `~/.claude.json`에 같은 이름이 있으면 **`claude_desktop_config.json` 쪽 설정을 사용**합니다. 헷갈리지 않게 **한 곳에만 등록**하세요. 플러그인(B)과도 동시에 쓰지 마세요 (5장 경고 참고).
+>
+> 참고: 터미널 Claude Code는 `claude_desktop_config.json`을 읽지 않습니다. 터미널과 Code 탭 양쪽에서 쓰려면 방법 A나 B가 편합니다.
+
+#### Code 탭에서 확인하고 사용하기
+
+1. 앱을 재시작하고 Code 탭에서 **Local** 세션을 엽니다.
+2. 아래 방법 중 하나로 연결을 확인합니다.
+   - 입력창에 "chrome-devtools 도구 쓸 수 있어? 도구 목록 보여줘"라고 물어보기
+   - 내장 터미널에서 `claude mcp list` 실행 (방법 A, 또는 `claude_desktop_config.json`이 아닌 설정 파일로 등록한 경우)
+   - 플러그인이면 **+ → Plugins**에서 `chrome-devtools-mcp`와 스킬 확인. 입력창에 `/`를 치면 스킬 목록이 나옵니다
+3. 이후 사용법은 7장과 같습니다. 말로 시키면 됩니다.
+   ```
+   localhost:3000 열어서 로그인 버튼 눌러보고 스크린샷 찍어줘
+   ```
+4. 처음 도구를 쓸 때 권한 확인 카드가 나오면 허용합니다. 입력창 옆 **모드 선택기**(Manual / Accept edits / Plan / Auto)로 얼마나 자주 물어볼지 정할 수 있습니다.
+
+Code 탭에는 파일 창(**⋮ → Files**)이 있어서, Claude가 프로젝트 폴더에 저장한 스크린샷이나 보고서를 앱 안에서 찾아보기 편합니다. 이미지가 앱 안에서 바로 미리보기 되는지는 확인하지 못했습니다.
+
+#### Code 탭 내장 Browser 창과의 관계
+
+Code 탭에는 Anthropic이 만든 **내장 Browser 창**(`Ctrl+Shift+B`)이 따로 있습니다. 공식 문서 기준으로 Claude가 이 창에서 페이지를 읽고 클릭할 수 있고, 내 앱을 띄워서 검증할 때도 씁니다. **chrome-devtools-mcp와는 별개의 도구**입니다.
+
+| 비교 | 내장 Browser 창 | chrome-devtools-mcp |
+|---|---|---|
+| 설치 | 필요 없음 (기본 제공. 설정 → Claude Code → Browser tools에서 끌 수 있음) | 설치 필요 |
+| 화면 | 앱 안의 창으로 바로 보임 | 별도 Chrome 창이 뜸 |
+| 안전장치 | 외부 사이트 조작 시 안전 분류기 검사, 사이트별 승인 카드 | 클라이언트 권한 확인에 의존 |
+| 강점 | 앱 미리보기와 검증, 간단한 탐색과 조작 | **성능 측정(LCP 등), 네트워크·콘솔 상세 분석, Lighthouse, 메모리 분석, 기기·네트워크 흉내** |
+| 로그인 상태 | 깨끗한 별도 프로필 | 기본은 별도 프로필, `--autoConnect`로 내 Chrome 연결 가능 |
+
+**추천 (추론):** 내 앱을 띄워서 눈으로 확인하는 정도면 **내장 Browser 창으로 충분**합니다. 성능, 네트워크, Lighthouse, 메모리 같은 **개발자 도구 수준의 분석이 필요할 때** chrome-devtools-mcp를 쓰세요. 둘 다 켜져 있으면 Claude가 어느 쪽을 쓸지 헷갈릴 수 있으니, "chrome-devtools로 성능 측정해줘"처럼 도구를 지정하면 확실합니다.
+
+#### Code 탭에서 문제가 생기면
+
+| 증상 | 해결 (공식 문서 기준) |
+|---|---|
+| `npx`나 `node`를 못 찾음 | 일반 터미널에서 `node --version`이 되는지 확인 후 **앱 재시작**. Windows 앱은 사용자·시스템 환경변수를 상속하지만 **PowerShell 프로필은 읽지 않습니다.** Node.js를 방금 설치했다면 앱을 껐다 켜야 PATH가 반영됩니다 |
+| Windows에서 MCP 서버가 연결되지 않거나 토글이 반응하지 않음 | 설정 파일 확인 → 앱 재시작 → 작업 관리자에서 서버 프로세스(node)가 실행 중인지 확인 → 로그 확인. 그래도 안 되면 15장의 `cmd /c` 방식으로 등록 |
+| 플러그인 메뉴가 안 보임 | Cloud나 WSL 세션인지 확인 → **Local** 세션으로 다시 시작 |
+| `/permissions` 같은 명령이 "isn't available in this environment" | Code 탭에서는 터미널 대화상자 명령이 동작하지 않습니다. 설정 파일을 직접 고치거나 내장 터미널에서 실행하세요 |
+| 로그 위치 | Windows: 이벤트 뷰어 → Windows 로그 → 응용 프로그램 |
+
+#### Code 탭에서 삭제하기
+
+| 설치 방법 | 삭제 |
+|---|---|
+| 플러그인 | **+ → Plugins → Manage plugins**에서 uninstall. 또는 내장 터미널에서 `claude plugin uninstall chrome-devtools-mcp@chrome-devtools-plugins` |
+| 방법 A (`claude mcp add`) | 내장 터미널에서 `claude mcp remove chrome-devtools --scope user` |
+| `claude_desktop_config.json` | 파일에서 `chrome-devtools` 항목을 지우고 앱 완전 종료 후 재시작 |
+
+남는 파일(브라우저 전용 프로필 등) 정리는 14.4절과 같습니다.
 
 ---
 
@@ -717,6 +839,9 @@ A. 기술적으로는 가능하지만, 사이트 이용약관, 자동화 금지 
 **Q. agent-skills의 `browser-testing-with-devtools` 스킬과는 무슨 관계인가요?**
 A. 그 스킬이 바로 이 도구를 쓰는 방법을 안내하는 절차서입니다. agent-skills 가이드 10.4절의 설정과 이 문서의 방법 A를 함께 쓰면 됩니다.
 
+**Q. Claude 데스크톱 앱에서도 쓸 수 있나요?**
+A. 네. **Code 탭**은 터미널 Claude Code와 설정을 공유하므로, 터미널에서 설치했다면 그대로 쓸 수 있고, 앱 화면(+ → Plugins)에서 설치할 수도 있습니다. Local 세션에서 쓰세요. 일반 채팅(Chat 탭)에서는 `claude_desktop_config.json`에 등록합니다. 자세한 내용은 [5.5절](#55-claude-데스크톱-앱-code-탭에서-쓰기)을 보세요.
+
 **Q. Claude in Chrome이나 Playwright MCP와는 뭐가 다른가요?**
 A. 모두 AI가 브라우저를 조작하는 도구입니다. Chrome DevTools MCP는 **Google이 만들었고, 성능 측정, 네트워크·콘솔 분석, Lighthouse, 메모리 분석 같은 개발자 도구 기능이 강점**입니다. 다른 도구들은 이번에 상세히 비교하지 않았습니다. 필요하면 별도로 정리해 드리겠습니다.
 
@@ -728,5 +853,6 @@ A. 모두 AI가 브라우저를 조작하는 도구입니다. Chrome DevTools MC
   - `README.md`, `SECURITY.md`, `CHANGELOG.md`, `LICENSE`
   - `docs/client-configurations.md`, `docs/configuration.md`, `docs/tool-reference.md`, `docs/slim-tool-reference.md`, `docs/advanced-usage.md`, `docs/cli.md`, `docs/troubleshooting.md`, `docs/design-principles.md`, `docs/debugging-android.md`, `docs/third-party-developer-tools.md`
   - `skills/*/SKILL.md` (7개), `plugin.json`, `mcp.json`, `.claude-plugin/marketplace.json`
+- Claude Code 공식 문서 Desktop application (Code 탭, 설정 공유, 플러그인, 내장 Browser 창): <https://code.claude.com/docs/en/desktop>
 - npm: <https://www.npmjs.com/package/chrome-devtools-mcp> (v1.10.1, `npm view`로 확인)
 - 실측: chrome-devtools-mcp 1.10.1 + Chromium(headless) + MCP SDK 클라이언트로 도구 호출, Claude Code 2.1.289의 `claude mcp`, `claude plugin` 명령 실행 결과
